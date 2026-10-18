@@ -1,5 +1,11 @@
-<title>Ishan Upadhyay</title>
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EDEDEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111211" media="(prefers-color-scheme: dark)">
+<title>Ishan Upadhyay</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Ishan Upadhyay — creative director and creative technologist. Instruments, experiments, work, play.">
 <link rel="stylesheet" href="fonts.css">
@@ -86,7 +92,7 @@ h1,h2,h3,h4{font-family:var(--f-sans);margin:0;text-wrap:balance}
 @media (max-width:860px){
   .h-meta{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:16px}
   .h-meta div:nth-child(n+3){display:none}
-  .hc{--k:.58;left:var(--mx);top:var(--my)}.hc[data-m="0"]{display:none}
+  .hc{--k:.66;left:var(--mx);top:var(--my)}.hc[data-m="0"]{display:none}
   .h-line{bottom:auto;top:62%;right:0}
   .h-cta{bottom:4%;left:0;right:auto}
 }
@@ -302,6 +308,35 @@ footer .sbtn:hover{border-color:var(--bg)}
 .cur{position:fixed;left:0;top:0;z-index:120;pointer-events:none;font-family:var(--f-mono);font-size:11px;background:var(--ink);color:var(--bg);padding:4px 10px;border-radius:99px;opacity:0;transform:translate(-50%,-50%) scale(.6);transition:opacity .2s,transform .25s var(--ease)}
 .cur.show{opacity:1;transform:translate(16px,16px) scale(1)}
 @media (pointer:coarse){.cur{display:none}}
+/* phones */
+.more{display:none}
+@media (max-width:960px){
+  .preview{position:sticky;top:calc(68px + env(safe-area-inset-top,0px));z-index:4;background:var(--bg);padding-bottom:14px;border-bottom:1px solid var(--line)}
+}
+@media (max-width:640px){
+  :root{--sec:clamp(88px,24vw,128px)}
+  .block .sec-head,.sec-head{margin-bottom:40px}
+  .statement p{font-size:clamp(25px,7vw,32px);line-height:1.18;max-width:none}
+  .statement .by{margin-top:28px}
+  .hero{height:auto;min-height:min(calc(100svh - 70px),780px)}
+  .h-line{font-size:17px;max-width:none}
+  .h-foot span:nth-child(2){display:none}
+  .pv-frame{aspect-ratio:16/8}
+  .pv-tag{top:8px}
+  .pv-info{padding-top:12px;gap:6px 14px;align-items:center}
+  .pv-info h3{font-size:30px}
+  .pv-info p{display:none}
+  .pv-info .pill{padding:8px 14px;font-size:13px}
+  .trow{padding:16px 0;gap:6px 16px}
+  .trow.sel{padding-left:0}
+  .trow .ds{font-size:13.5px;line-height:1.45}
+  #experiments.clip .grid-vp .board .xi:nth-child(n+11){display:none}
+  #experiments.clip .grid-vp ~ .more{display:flex;margin:4px auto 0;justify-content:center;width:100%}
+  .tile{min-height:220px;gap:20px}
+  .tile h3{font-size:44px}
+  .tile.wide h3{font-size:48px}
+  .f-call{font-size:clamp(34px,10vw,44px)}
+}
 .toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:99px;font-size:13px;opacity:0;transition:.3s;z-index:130;pointer-events:none}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.marq .track{animation:none}.marq{overflow-x:auto}*{transition-duration:.01ms!important}}
@@ -366,7 +401,7 @@ footer .sbtn:hover{border-color:var(--bg)}
   </div>
 </section>
 
-<section class="block wrap" id="experiments">
+<section class="block wrap clip" id="experiments">
   <div class="sec-head">
     <div class="idx mono"><span>02 / experiments</span><span>34 pieces · 19 films</span></div>
     <h2>Experiments</h2>
@@ -384,6 +419,7 @@ footer .sbtn:hover{border-color:var(--bg)}
     <div class="mini" id="mini" aria-hidden="true"><i id="miniView"></i></div>
     <span class="compass mono">drag · click to open</span>
   </div>
+  <button type="button" class="pill ghost more" id="exMore">Show all experiments</button>
 </section>
 
 <section class="block wrap" id="work">
@@ -694,6 +730,7 @@ tl.addEventListener("click",e=>{const r=e.target.closest(".trow");if(r&&!e.targe
 tl.addEventListener("focusin",e=>{const r=e.target.closest(".trow");if(r)selTool(+r.dataset.i)});
 tc.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;$$("#toolChips .chip").forEach(c=>c.setAttribute("aria-pressed",c===b));const k=b.dataset.k;let first=-1;$$(".trow").forEach(r=>{const show=k==="all"||r.dataset.c===k;r.hidden=!show;if(show&&first<0)first=+r.dataset.i});if(first>=0)selTool(first);});
 selTool(0);
+if("IntersectionObserver" in window){const MQ=matchMedia("(max-width:960px)");const io=new IntersectionObserver(es=>{if(!MQ.matches)return;es.forEach(en=>{if(en.isIntersecting&&!en.target.hidden)selTool(+en.target.dataset.i)})},{rootMargin:"-52% 0px -40% 0px"});$$(".trow").forEach(r=>io.observe(r));}
 
 function fitCanvas(cv){const r=cv.getBoundingClientRect();const w=Math.max(1,Math.round(r.width)),h=Math.max(1,Math.round(r.height));if(cv.width!==Math.round(w*DPR)||cv.height!==Math.round(h*DPR)){cv.width=Math.round(w*DPR);cv.height=Math.round(h*DPR);}const ctx=cv.getContext("2d");ctx.setTransform(DPR,0,0,DPR,0,0);return {ctx,w,h};}
 function rrect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
@@ -737,6 +774,7 @@ const tcv=$("#toolCanvas");let instVisible=false;new IntersectionObserver(es=>in
 
 /* ================= EXPERIMENTS ================= */
 const board=$("#board"),vp=$("#exVp"),exChips=$("#exChips");
+$("#exMore").textContent=`Show all ${X.length} experiments`;$("#exMore").addEventListener("click",()=>$("#experiments").classList.remove("clip"));
 Object.entries(XCAT).forEach(([k,v],i)=>{const b=document.createElement("button");b.type="button";b.className="chip";b.textContent=v;b.dataset.k=k;b.setAttribute("aria-pressed",i===0);exChips.appendChild(b)});
 let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647,(seed-1)/2147483646);
 const COLS=7,COLW=300,GAP=90,colY=Array(COLS).fill(0).map(()=>100+rnd()*180),BW=COLS*(COLW+GAP)+GAP;
@@ -762,7 +800,7 @@ function setMode(bm){boardMode=bm;$("#vBoard").setAttribute("aria-pressed",bm);$
   if(!bm){delete vp.dataset.cur;board.style.transform="none";board.style.width="auto";board.style.height="auto";board.style.position="static"}else{vp.dataset.cur="drag";board.style.position="absolute";board.style.width=BW+"px";board.style.height=BH+"px";centerBoard()}
   $("#mini").hidden=!bm;vp.querySelector(".compass").hidden=!bm;}
 $("#vBoard").onclick=()=>setMode(true);$("#vGrid").onclick=()=>setMode(false);
-exChips.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;$$("#exChips .chip").forEach(c=>c.setAttribute("aria-pressed",c===b));const k=b.dataset.k;$$(".xi").forEach(f=>f.classList.toggle("dim",k!=="all"&&f.dataset.c!==k));});
+exChips.addEventListener("click",e=>{const b=e.target.closest(".chip");if(!b)return;if(b.dataset.k!=="all")$("#experiments").classList.remove("clip");$$("#exChips .chip").forEach(c=>c.setAttribute("aria-pressed",c===b));const k=b.dataset.k;$$(".xi").forEach(f=>f.classList.toggle("dim",k!=="all"&&f.dataset.c!==k));});
 if(matchMedia("(max-width: 700px)").matches)setMode(false);else centerBoard();
 addEventListener("resize",()=>{if(boardMode)applyBoard()});
 const vidIO=new IntersectionObserver(es=>es.forEach(en=>{const v=en.target;if(en.isIntersecting){if(!v.src&&v.dataset.src)v.src=v.dataset.src;if(!RM)v.play().catch(()=>{})}else v.pause()}),{threshold:.25});
@@ -828,7 +866,7 @@ addEventListener("message",e=>{if(e.data&&e.data.type==="close-game"&&drOpen)clo
 
 /* ================= MARQUEE, EMAIL ================= */
 function clock(){try{const t=new Intl.DateTimeFormat("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"Asia/Kolkata"}).format(new Date());$("#clock").textContent=t;$("#clock2").textContent=t}catch(e){}}clock();setInterval(clock,15000);
-function fitName(el){if(!el)return;el.style.fontSize="100px";const rg=document.createRange();rg.selectNodeContents(el);const w=rg.getBoundingClientRect().width;const par=el.parentElement,cs=getComputedStyle(par),pw=par.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);if(w>0)el.style.fontSize=(100*pw/w*.84)+"px"}
+function fitName(el){if(!el)return;el.style.fontSize="100px";const rg=document.createRange();rg.selectNodeContents(el);const w=rg.getBoundingClientRect().width;const par=el.parentElement,cs=getComputedStyle(par),pw=par.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);if(w>0)el.style.fontSize=(100*pw/w*(innerWidth<700?.985:.84))+"px"}
 function fitNames(){fitName($("#hName"));fitName($("#fName"))}
 fitNames();addEventListener("resize",fitNames);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fitNames);
 function selectEmail(){const r=document.createRange();r.selectNodeContents($("#email"));const s=getSelection();s.removeAllRanges();s.addRange(r)}
