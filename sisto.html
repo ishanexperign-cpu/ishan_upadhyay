@@ -1,0 +1,1155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#15131b">
+<title>Sisto</title>
+<link rel="stylesheet" href="fonts.css">
+<style>
+:root{
+  --ink:#15131b; --surface:#1e1b26; --raise:#29253a; --chalk:#f3f0f7;
+  --haze:rgba(243,240,247,.6); --faint:rgba(243,240,247,.36); --line:rgba(243,240,247,.1); --line2:rgba(243,240,247,.18);
+  --glass:rgba(24,21,31,.62);
+  --ok:#3fe0a0; --mid:#ffc24a; --bad:#ff6b88;
+  --font:'Geist',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1); --spring:cubic-bezier(.34,1.5,.64,1);
+  --tape:linear-gradient(90deg,#ff3b4f,#ff8a1f,#ffd84a,#2fd67a,#2bd3ff,#3a5bff,#9a4dff,#ff4fae);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;background:var(--ink);color:var(--chalk);font-family:var(--font);font-size:15px;overflow:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;font-feature-settings:"ss01","tnum"}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0}
+:focus-visible{outline:2px solid var(--chalk);outline-offset:3px;border-radius:10px}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:100;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* view + overlay transitions */
+.screen,.ov{position:fixed;inset:0;opacity:0;visibility:hidden;transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s linear .6s}
+.screen{transform:scale(.985)}
+.screen.on,.ov.on{opacity:1;visibility:visible;transform:none;transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s}
+.ov{z-index:40;background:rgba(18,16,24,.8);backdrop-filter:blur(28px) saturate(1.2);-webkit-backdrop-filter:blur(28px) saturate(1.2);overflow:auto}
+
+/* ================= menu ================= */
+#menu{overflow:auto}
+.wrap{max-width:1280px;margin:0 auto;padding:clamp(20px,3.6vw,48px);display:grid;grid-template-columns:minmax(0,1fr) minmax(330px,420px);gap:clamp(24px,4vw,64px);align-items:start;min-height:100%}
+@media (max-width:920px){.wrap{grid-template-columns:1fr}}
+.top{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center}
+.wordmark{font-weight:800;font-size:22px;letter-spacing:-.04em;display:flex;align-items:center;gap:8px}
+.wordmark i{width:10px;height:10px;border-radius:50%;background:var(--tape);background-size:800% 100%;animation:tape 3.2s steps(8) infinite}
+@keyframes tape{to{background-position:100% 0}}
+.byline{color:var(--faint);font-size:13px}
+.hero{display:flex;flex-direction:column;gap:28px;min-width:0}
+.hero h1{font-weight:800;font-size:clamp(46px,7.4vw,104px);line-height:.92;letter-spacing:-.055em;max-width:11ch}
+.hero h1 span{display:block;color:var(--haze)}
+.lede{font-size:clamp(16px,1.6vw,19px);line-height:1.5;color:var(--haze);max-width:52ch}
+
+/* demo — the hero is the game */
+.demo{position:relative;border-radius:28px;overflow:hidden;height:clamp(280px,34vw,380px);cursor:pointer;user-select:none;-webkit-user-select:none;isolation:isolate}
+.demo .amb{position:absolute;inset:0;background:#2a2635;transition:background-color 60ms linear}
+.demo .sheen,.panel .sheen{position:absolute;inset:0;pointer-events:none;background:radial-gradient(120% 70% at 50% -10%,rgba(255,255,255,.22),transparent 60%),linear-gradient(to top,rgba(0,0,0,.22),transparent 40%)}
+.demo .center{position:absolute;inset:40px 0 0 0;display:grid;place-items:center}
+.demo .disc{width:clamp(96px,13vw,150px)}
+.demo .say{position:absolute;left:20px;top:18px;right:20px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.demo .res{position:absolute;inset:40px 0 0 0;display:grid;place-items:center;pointer-events:none}
+.demo .res b{font-weight:900;font-size:clamp(40px,6vw,76px);letter-spacing:-.05em;color:var(--fg,#fff);opacity:0;transform:scale(.85);transition:opacity .35s var(--ease),transform .5s var(--spring)}
+.demo.done .res b{opacity:1;transform:none}
+.demo.done .center{opacity:0;transform:scale(.9);transition:opacity .3s,transform .4s var(--ease)}
+.demo .center{transition:opacity .35s var(--ease),transform .5s var(--spring)}
+
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:620px){.rules{grid-template-columns:1fr}}
+.rule{padding:18px 18px 20px;border-radius:20px;background:var(--surface);display:flex;flex-direction:column;gap:10px}
+.rule .g{font-size:28px;line-height:1}
+.rule h3{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.rule p{color:var(--haze);font-size:14px;line-height:1.5}
+.points{font-size:14px;line-height:1.65;color:var(--haze);max-width:68ch}
+.points b{color:var(--chalk);font-weight:600}
+.board{display:flex;flex-direction:column;gap:12px}
+.board h2{font-size:17px;font-weight:700;letter-spacing:-.02em}
+.board ol{list-style:none;display:flex;flex-direction:column}
+.board li{display:grid;grid-template-columns:28px 1fr auto 64px;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px;align-items:baseline}
+.board li .r{color:var(--faint)} .board li .m{color:var(--faint);font-size:13px} .board li .t{text-align:right;font-weight:700}
+.board .empty{color:var(--faint);font-size:14px;padding:10px 0;border-top:1px solid var(--line)}
+.credit{color:var(--faint);font-size:13px}
+
+/* setup */
+.setup{position:sticky;top:24px;background:var(--surface);border-radius:28px;padding:22px;display:flex;flex-direction:column;gap:22px}
+.grp{display:flex;flex-direction:column;gap:10px}
+.grp>.h{display:flex;justify-content:space-between;align-items:center;font-size:14px;font-weight:600}
+.grp>.h small{font-weight:400;color:var(--faint);font-size:13px}
+.stepper{display:flex;align-items:center;background:var(--ink);border-radius:999px;padding:3px}
+.stepper button{width:34px;height:30px;border-radius:999px;font-size:18px;line-height:1;color:var(--haze);transition:background .2s,color .2s}
+.stepper button:hover{background:var(--raise);color:var(--chalk)}
+.stepper output{min-width:30px;text-align:center;font-weight:700}
+.names{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.names input{width:100%;min-width:0;background:var(--ink);border:1px solid transparent;border-radius:12px;padding:10px 12px;font-size:14px;outline:none;transition:border-color .2s}
+.names input::placeholder{color:var(--faint)}
+.names input:focus{border-color:var(--line2)}
+.seg{position:relative;display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:2px;background:var(--ink);border-radius:14px;padding:3px}
+.seg .thumb{position:absolute;left:0;top:0;border-radius:11px;background:var(--chalk);pointer-events:none}
+.seg.ready .thumb{transition:transform .5s var(--spring),width .4s var(--ease),height .4s var(--ease)}
+.seg button{position:relative;z-index:1;padding:9px 6px 8px;border-radius:11px;text-align:center;font-size:13px;font-weight:600;color:var(--haze);transition:color .3s var(--ease);line-height:1.2}
+.seg button small{display:block;font-weight:400;font-size:11.5px;color:var(--faint);margin-top:2px;transition:color .3s}
+.seg button:hover{color:var(--chalk)}
+.seg button[aria-pressed="true"]{color:var(--ink)}
+.seg button[aria-pressed="true"] small{color:rgba(21,19,27,.6)}
+details{font-size:13px;color:var(--haze)}
+details summary{cursor:pointer;font-weight:600;color:var(--haze);list-style:none;display:flex;align-items:center;gap:8px}
+details summary::before{content:"";width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .3s var(--ease)}
+details[open] summary::before{transform:rotate(45deg)}
+details .inner{padding-top:14px;display:flex;flex-direction:column;gap:12px;line-height:1.5}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+select{background:var(--ink);border:0;border-radius:10px;padding:8px 10px;font-size:13px}
+.cta{position:relative;border-radius:999px;padding:17px 22px;font-weight:700;font-size:16px;letter-spacing:-.01em;background:var(--chalk);color:var(--ink);transition:transform .4s var(--spring)}
+.cta::after{content:"";position:absolute;left:18px;right:18px;bottom:-1px;height:3px;border-radius:3px;background:var(--tape);opacity:.9}
+.cta:hover{transform:translateY(-2px)}
+.cta:active{transform:scale(.98)}
+.cta:disabled{opacity:.6;cursor:wait}
+.note{font-size:13px;line-height:1.5;color:var(--haze);min-height:1.5em}
+.note.err{color:var(--bad)}
+.keys{font-size:13px;color:var(--faint);line-height:1.6}
+kbd{font-family:var(--font);font-size:12px;font-weight:600;background:var(--ink);border-radius:6px;padding:1px 7px;color:var(--chalk)}
+
+/* ================= shared game atoms ================= */
+.disc{aspect-ratio:1;border-radius:50%;background:var(--tc,#888);box-shadow:0 30px 90px -24px var(--tc,#000),inset 0 2px 1px rgba(255,255,255,.28),inset 0 -10px 30px rgba(0,0,0,.12);transition:transform .6s var(--spring),box-shadow .35s var(--ease)}
+.rolling .disc{transform:scale(.74);box-shadow:0 0 0 5px var(--fg,#fff),0 26px 60px -22px rgba(0,0,0,.55),inset 0 2px 1px rgba(255,255,255,.28)}
+.chip{display:inline-flex;align-items:center;gap:9px;background:rgba(18,16,24,.66);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);color:var(--chalk);border-radius:999px;padding:8px 15px 8px 9px;font-size:14px;white-space:nowrap}
+.chip .sw{width:22px;height:22px;border-radius:50%;background:var(--tc,#888);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.25)}
+.chip b{font-weight:700}
+.chip .dim{color:var(--haze)}
+.chip.plain{padding:8px 15px}
+.chip.warn{color:var(--mid)}
+
+/* ================= play ================= */
+.stage{position:absolute;inset:0;display:grid;grid-template-columns:1fr;touch-action:none;user-select:none;-webkit-user-select:none}
+.stage[data-split="true"]{grid-template-columns:1fr 1fr}
+.panel{position:relative;overflow:hidden;--fg:#f3f0f7;--tc:#888;color:var(--fg);transition:color var(--cd,90ms) linear;isolation:isolate}
+.panel+.panel{box-shadow:inset 1px 0 0 rgba(0,0,0,.25)}
+.panel .amb{position:absolute;inset:0;background:var(--surface);transition:background-color var(--cd,90ms) linear}
+.panel .glow{position:absolute;inset:0;background:radial-gradient(60% 55% at 50% 48%,color-mix(in srgb,var(--tc) 30%,transparent),transparent 70%);transition:opacity .5s var(--ease)}
+.panel.rolling .glow,.panel[data-state="frozen"] .glow{opacity:0}
+.panel .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+.panel.snap .flash{animation:flash .55s var(--ease)}
+@keyframes flash{0%{opacity:.42}100%{opacity:0}}
+.panel .tchip{position:absolute;top:88px;left:50%;transform:translateX(-50%);z-index:3}
+.panel .mid{position:absolute;left:16px;right:16px;top:140px;bottom:56px;display:grid;place-items:center;z-index:2}
+.panel .mid>*{grid-area:1/1}
+.core{display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;transition:opacity .4s var(--ease),transform .55s var(--spring),filter .4s var(--ease)}
+.core .disc{width:min(30vmin,250px)}
+.stage[data-split="true"] .core .disc{width:min(22vmin,190px)}
+.core .dname{font-weight:900;font-size:clamp(44px,9vmin,110px);line-height:.9;letter-spacing:-.055em;transition:transform .55s var(--spring),opacity .4s}
+.stage[data-split="true"] .core .dname{font-size:clamp(34px,6.4vmin,84px)}
+.panel.rolling .dname{transform:scale(.62);opacity:.9}
+.panel[data-state="frozen"] .core{opacity:0;transform:scale(.86);filter:blur(10px)}
+.verdict{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;opacity:0;transform:scale(.88);filter:blur(12px);pointer-events:none;transition:opacity .45s var(--ease),transform .6s var(--spring),filter .45s var(--ease)}
+.panel[data-state="frozen"] .verdict{opacity:1;transform:none;filter:none}
+.verdict .w{font-weight:900;font-size:clamp(60px,14vmin,176px);line-height:.86;letter-spacing:-.065em}
+.stage[data-split="true"] .verdict .w{font-size:clamp(44px,9.5vmin,120px)}
+.verdict .p{font-weight:700;font-size:clamp(24px,4.6vmin,46px);letter-spacing:-.03em}
+.verdict .m{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}
+.burst{width:min(30vmin,250px);aspect-ratio:1;border-radius:50%;border:3px solid var(--fg);opacity:0;pointer-events:none}
+.panel.pop .burst{animation:burst .9s var(--ease)}
+@keyframes burst{0%{transform:scale(.6);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+
+.hud{position:absolute;top:12px;left:12px;right:12px;height:60px;border-radius:20px;background:var(--glass);backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:0 8px 0 18px;z-index:10}
+.hud .wordmark{font-size:20px}
+.who{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.who .n{font-weight:700;font-size:17px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:42vw}
+.who .s{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--haze)}
+.segs{display:flex;gap:3px}
+.segs i.gs{margin-left:5px}
+.segs i{display:block;width:10px;height:6px;border-radius:3px;background:rgba(243,240,247,.16);transition:background .4s var(--ease),transform .4s var(--spring)}
+.segs i.now{background:var(--chalk);transform:scaleY(1.35)}
+.segs i.hit{background:var(--ok)} .segs i.close{background:var(--mid)} .segs i.miss{background:var(--bad)}
+.segs i.split{-webkit-mask:linear-gradient(90deg,#000 45%,transparent 45% 55%,#000 55%);mask:linear-gradient(90deg,#000 45%,transparent 45% 55%,#000 55%)}
+.hr{display:flex;justify-content:flex-end;align-items:center;gap:12px}
+.score{text-align:right;line-height:1}
+.score b{display:block;font-weight:800;font-size:24px;letter-spacing:-.03em}
+.score span{font-size:12px;color:var(--haze)}
+.tools{display:flex;gap:4px}
+.ib{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:var(--haze);transition:background .2s,color .2s}
+.ib:hover{background:rgba(243,240,247,.08);color:var(--chalk)}
+.ib svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ib.off{opacity:.4}
+.ib.arm{background:var(--bad);color:#fff;width:auto;padding:0 12px;font-size:13px;font-weight:600}
+
+.announce{position:absolute;inset:0;display:grid;place-items:center;z-index:12;pointer-events:none;background:rgba(18,16,24,.35);transition:opacity .35s var(--ease),visibility 0s linear .35s;opacity:0;visibility:hidden}
+.announce.on{opacity:1;visibility:visible;transition:opacity .25s var(--ease),visibility 0s}
+.abox{background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:30px;padding:26px 34px 22px;display:flex;flex-direction:column;align-items:center;gap:14px;min-width:min(420px,88vw);transform:scale(.92);transition:transform .55s var(--spring)}
+.announce.on .abox{transform:none}
+.abox .k{font-size:14px;color:var(--haze)}
+.abox .t{font-weight:900;font-size:clamp(40px,7vmin,76px);letter-spacing:-.055em;line-height:.95}
+.abox .t.lv{background:var(--tape);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 2s linear infinite}
+@keyframes slide{to{background-position:200% 0}}
+.abox .tg{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.abox .bar{width:100%;height:3px;border-radius:2px;background:rgba(243,240,247,.12);overflow:hidden;margin-top:4px}
+.abox .bar i{display:block;height:100%;background:var(--chalk);transform-origin:left;animation:bar var(--ad,1300ms) linear forwards}
+@keyframes bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+.handhint{position:absolute;left:50%;top:140px;transform:translateX(-50%);z-index:13}
+.cam{position:absolute;right:14px;bottom:14px;width:clamp(150px,16vw,220px);border-radius:18px;overflow:hidden;background:rgba(18,16,24,.8);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);z-index:11}
+.cam .vw{position:relative;aspect-ratio:4/3;background:#000}
+.cam video{width:100%;height:100%;object-fit:cover;display:block;transform:scaleX(-1);opacity:.6}
+.cam canvas{position:absolute;inset:0;width:100%;height:100%}
+.tags{display:flex}
+.tag{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px;font-size:12px}
+.tag+.tag{box-shadow:inset 1px 0 0 var(--line)}
+.tag .t{display:flex;justify-content:space-between;color:var(--haze)}
+.tag .t b{color:var(--chalk);font-weight:600}
+.meter{height:4px;background:rgba(243,240,247,.12);border-radius:2px;position:relative}
+.meter i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;transition:width .08s linear}
+.meter::before,.meter::after{content:"";position:absolute;top:-3px;bottom:-3px;width:1.5px;background:rgba(243,240,247,.4);border-radius:1px}
+.meter::before{left:var(--f,25%)}.meter::after{left:var(--o,60%)}
+
+/* ================= gate ================= */
+.gate{min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;padding:32px 20px;text-align:center}
+.gate .k{color:var(--haze);font-size:15px}
+.gate h2{font-weight:900;font-size:clamp(60px,12vw,156px);line-height:.86;letter-spacing:-.065em;max-width:92vw;overflow-wrap:anywhere}
+.gate .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.gate .chips span{background:var(--surface);border-radius:999px;padding:8px 14px;font-size:13.5px;color:var(--haze)}
+.ring{width:124px;height:124px;position:relative;display:grid;place-items:center}
+.ring svg{position:absolute;inset:0;transform:rotate(-90deg)}
+.ring .g{font-size:48px}
+.gate .hint{font-size:15px;color:var(--haze);line-height:1.6;max-width:42ch}
+.gate .cta{min-width:200px}
+.mini{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;font-size:13.5px;color:var(--faint)}
+.mini b{color:var(--chalk);font-weight:600}
+
+/* ================= ledger ================= */
+.ledger{max-width:1140px;margin:0 auto;padding:clamp(20px,4vw,52px);display:flex;flex-direction:column;gap:26px}
+.lhead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.lhead .k{color:var(--haze);font-size:15px}
+.lhead h2{font-weight:900;font-size:clamp(48px,8.4vw,112px);line-height:.86;letter-spacing:-.065em;margin-top:8px}
+.lhead p{margin-top:14px;color:var(--haze);font-size:17px;line-height:1.5;max-width:56ch}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border-radius:999px;padding:12px 18px;font-size:14px;font-weight:600;background:var(--surface);transition:background .2s,transform .3s var(--spring)}
+.btn:hover{background:var(--raise)}
+.btn.pri{background:var(--chalk);color:var(--ink)}
+.btn:active{transform:scale(.97)}
+.podium{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:12px}
+@media (max-width:700px){.podium{grid-template-columns:1fr}}
+.pod{background:var(--surface);border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:6px;animation:rise .7s var(--spring) both;animation-delay:calc(var(--i)*90ms)}
+.pod.first{background:linear-gradient(var(--raise),var(--raise)) padding-box,var(--tape) border-box;border:2px solid transparent}
+.pod .rk{font-size:14px;color:var(--haze)}
+.pod .nm{font-weight:800;font-size:24px;letter-spacing:-.035em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .tt{font-weight:900;font-size:clamp(40px,5vw,60px);letter-spacing:-.05em;line-height:1}
+.pod .st{font-size:13.5px;color:var(--haze)}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+.tablewrap{overflow-x:auto;background:var(--surface);border-radius:24px}
+table.lt{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+.lt th{font-weight:500;font-size:13px;color:var(--faint);text-align:left;padding:16px 14px 12px}
+.lt td{padding:12px 10px;border-top:1px solid var(--line);vertical-align:middle}
+.lt tbody tr{animation:rise .6s var(--ease) both;animation-delay:calc(var(--i)*45ms + 120ms)}
+.lt tr.cur td{background:rgba(243,240,247,.04)}
+.lt .rk{width:40px;color:var(--faint);font-weight:600}
+.lt .nm{font-weight:700;font-size:16px;letter-spacing:-.02em;white-space:nowrap}
+.lt .nm small{display:block;font-weight:400;font-size:12.5px;color:var(--faint);margin-top:2px;letter-spacing:0}
+.lt .c{text-align:center;min-width:104px}
+.lt .c .sw{display:flex;gap:7px;justify-content:center;margin-bottom:6px}
+.lt .c .at{display:flex;flex-direction:column;align-items:center;gap:2px;padding-bottom:4px;border-bottom:2px solid var(--raise)}
+.lt .c .at.hit{border-color:var(--ok)} .lt .c .at.close{border-color:var(--mid)} .lt .c .at.miss{border-color:var(--bad)}
+.lt .c .pr{display:flex}
+.lt .c .pr i{width:11px;height:11px;border-radius:50%;display:block;box-shadow:0 0 0 2px var(--surface)}
+.lt .c .pr{gap:0} .lt .c .at .pr+.pr{margin-left:2px} .lt .c .at{flex-direction:row}
+.lt .c .pr i.x{background:var(--raise)}
+.lt .c b{font-weight:700}
+.lt .c.empty{color:var(--faint)}
+.lt .num{text-align:right;white-space:nowrap}
+.lt .tot{font-size:20px;font-weight:800;letter-spacing:-.03em}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--faint)}
+.legend span{display:flex;align-items:center;gap:7px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;background:var(--chalk);color:var(--ink);padding:11px 18px;border-radius:999px;font-size:14px;font-weight:600;z-index:60;transition:opacity .3s var(--ease),transform .45s var(--spring);pointer-events:none}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:700px){
+  .hud{grid-template-columns:1fr auto;padding-left:14px}
+  .hud .wordmark{display:none}
+  .who{align-items:flex-start}
+  .tools .opt{display:none}
+  .stage[data-split="true"] .tchip .dim{display:none}
+  .stage[data-split="true"] .chip{font-size:12.5px}
+  .panel .mid{bottom:40px}
+  .cam{width:118px;right:8px;bottom:10px}
+  .tag{padding:5px 6px;font-size:10.5px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= MENU ================= -->
+<section id="menu" class="screen on">
+  <div class="wrap">
+    <div class="top"><span class="wordmark"><i></i>sisto</span><span class="byline">An Experign game</span></div>
+
+    <div class="hero">
+      <h1>Open to roll.<span>Fist to stop.</span></h1>
+      <p class="lede">A hand-tracked reflex game for up to ten people. The colours run while your palm is open. Close your fist the instant the screen matches the disc.</p>
+
+      <div class="demo" id="demo" role="button" tabindex="0" aria-label="Try it: click to stop the colours">
+        <div class="amb"></div><div class="sheen"></div>
+        <div class="say"><span class="chip" id="demoChip"><i class="sw"></i><span class="dim">Stop at</span><b>Red</b></span><span class="chip plain" id="demoHint">Click to stop</span></div>
+        <div class="center rolling"><div class="disc"></div></div>
+        <div class="res"><b id="demoRes">Hit</b></div>
+      </div>
+
+      <div class="rules">
+        <div class="rule"><span class="g">✋</span><h3>Open your hand</h3><p>The colours start rolling in a loop. Watch the order, then time your stop.</p></div>
+        <div class="rule"><span class="g">✊</span><h3>Make a fist</h3><p>The colour freezes. Land on the disc’s colour, as close to the middle of its slot as you can.</p></div>
+        <div class="rule"><span class="g">⚡</span><h3>Five levels</h3><p>Three attempts at each speed, then the loop gets faster. In Ladder, levels 4 and 5 split the screen for both hands.</p></div>
+      </div>
+      <p class="points"><b>A hit</b> scores 100 to 150 points by precision. <b>One slot off</b> scores 25. <b>Both hands on target</b> adds 100. Speed multiplies everything, with 5 colours a second as ×1. A full run is 15 attempts, and ties go to the steadier average timing.</p>
+
+      <div class="board"><h2>Best runs on this device</h2><ol id="hofList"></ol></div>
+      <p class="credit">Concept and direction by Ishan Upadhyay, Experign</p>
+    </div>
+
+    <aside class="setup">
+      <div class="grp">
+        <div class="h"><span>Players</span>
+          <div class="stepper"><button id="pMinus" aria-label="Fewer players">−</button><output id="pCount">2</output><button id="pPlus" aria-label="More players">+</button></div>
+        </div>
+        <div class="names" id="names"></div>
+      </div>
+      <div class="grp"><div class="h"><span>Mode</span><small>5 levels, 3 attempts each</small></div>
+        <div class="seg" id="modeSeg" style="--n:3">
+          <button data-v="single">One hand<small>one colour</small></button>
+          <button data-v="split">Two hands<small>split screen</small></button>
+          <button data-v="ladder">Ladder<small>split from level 4</small></button>
+        </div>
+      </div>
+      <div class="grp"><div class="h"><span>Speed</span><small>colours a second, level 1 to 5</small></div>
+        <div class="seg" id="speedSeg" style="--n:3">
+          <button data-v="easy">Easy<small>2.5 to 5</small></button>
+          <button data-v="standard">Standard<small>3 to 7</small></button>
+          <button data-v="hard">Hard<small>4 to 10</small></button>
+        </div>
+      </div>
+      <div class="grp"><div class="h"><span>Turn order</span></div>
+        <div class="seg" id="orderSeg" style="--n:2">
+          <button data-v="level">Level by level<small>everyone, then faster</small></button>
+          <button data-v="player">Player by player<small>full run each</small></button>
+        </div>
+      </div>
+      <div class="grp"><div class="h"><span>Control</span></div>
+        <div class="seg" id="inputSeg" style="--n:2">
+          <button data-v="camera">Hand camera<small>open and fist</small></button>
+          <button data-v="keys">Keys or touch<small>press to stop</small></button>
+        </div>
+      </div>
+      <details>
+        <summary>Fine tuning</summary>
+        <div class="inner">
+          <div class="row"><span>Gesture lag compensation</span>
+            <select id="lagSel"><option value="0">Off</option><option value="40">40 ms</option><option value="80">80 ms</option><option value="120">120 ms</option></select></div>
+          <div class="row"><span>Fist sensitivity</span>
+            <select id="sensSel"><option value="strict">Strict</option><option value="normal">Normal</option><option value="loose">Loose</option></select></div>
+          <span>The camera sees your hand a moment after it moves. Compensation rewinds the stop by that much, so you get the colour you saw.</span>
+        </div>
+      </details>
+      <button class="cta" id="startBtn">Start match</button>
+      <p class="note" id="menuNote"></p>
+      <p class="keys">Keys: press <kbd>Space</kbd> to stop, release to roll again. Two hands: <kbd>F</kbd> for left, <kbd>J</kbd> for right. On touch, tap each half. <kbd>Esc</kbd> pauses.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= PLAY ================= -->
+<section id="play" class="screen">
+  <main class="stage" id="stage" data-split="false">
+    <section class="panel" id="p0" data-state="idle">
+      <div class="amb"></div><div class="glow"></div><div class="sheen"></div><div class="flash"></div>
+      <div class="tchip chip"><i class="sw"></i><span class="dim">Stop at</span><b class="tn">Red</b><span class="dim side" hidden>left hand</span></div>
+      <div class="mid">
+        <div class="burst"></div>
+        <div class="core"><div class="disc"></div><div class="dname">Red</div><span class="chip plain hint"></span></div>
+        <div class="verdict"></div>
+      </div>
+    </section>
+    <section class="panel" id="p1" data-state="idle" hidden>
+      <div class="amb"></div><div class="glow"></div><div class="sheen"></div><div class="flash"></div>
+      <div class="tchip chip"><i class="sw"></i><span class="dim">Stop at</span><b class="tn">Blue</b><span class="dim side">right hand</span></div>
+      <div class="mid">
+        <div class="burst"></div>
+        <div class="core"><div class="disc"></div><div class="dname">Blue</div><span class="chip plain hint"></span></div>
+        <div class="verdict"></div>
+      </div>
+    </section>
+  </main>
+
+  <header class="hud">
+    <span class="wordmark"><i></i>sisto</span>
+    <div class="who"><div class="n" id="hudName">—</div><div class="s"><span class="segs" id="hudDots"></span><span id="hudChance">1 of 5</span><span id="hudPace">5/s</span></div></div>
+    <div class="hr">
+      <div class="score"><b id="hudScore">0</b><span>points</span></div>
+      <div class="tools">
+        <button class="ib" id="btnLedger" title="Pause and see standings" aria-label="Standings"><svg viewBox="0 0 24 24"><path d="M5 7h14M5 12h14M5 17h9"/></svg></button>
+        <button class="ib opt" id="btnSound" title="Sound" aria-label="Sound"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4z"/><path d="M16.5 9a4.5 4.5 0 0 1 0 6"/></svg></button>
+        <button class="ib opt" id="btnFull" title="Full screen" aria-label="Full screen"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+        <button class="ib" id="btnEnd" title="End match" aria-label="End match"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <div class="announce" id="announce"></div>
+  <span class="handhint chip plain warn" id="handHint" hidden></span>
+  <div class="cam" id="cam" hidden>
+    <div class="vw"><video id="video" playsinline muted autoplay></video><canvas id="camDots"></canvas></div>
+    <div class="tags" id="camTags"></div>
+  </div>
+</section>
+
+<!-- ================= GATE ================= -->
+<div class="ov" id="gate">
+  <div class="gate">
+    <span class="k" id="gateK">Player 1 of 2</span>
+    <h2 id="gateName">Player</h2>
+    <div class="chips" id="gateMeta"></div>
+    <div class="ring" id="gateRing">
+      <svg viewBox="0 0 124 124"><circle cx="62" cy="62" r="56" fill="none" stroke="rgba(243,240,247,.12)" stroke-width="5"/><circle id="gateArc" cx="62" cy="62" r="56" fill="none" stroke="#f3f0f7" stroke-width="5" stroke-linecap="round" stroke-dasharray="351.9" stroke-dashoffset="351.9"/></svg>
+      <span class="g">✊</span>
+    </div>
+    <p class="hint" id="gateHint"></p>
+    <button class="cta" id="gateBtn">Begin turn</button>
+    <div class="mini" id="gateMini"></div>
+  </div>
+</div>
+
+<!-- ================= LEDGER ================= -->
+<div class="ov" id="ledgerOv">
+  <div class="ledger">
+    <div class="lhead">
+      <div><span class="k" id="ledK">Standings</span><h2 id="ledTitle">Standings</h2><p id="ledLead"></p></div>
+      <div class="acts" id="ledActs"></div>
+    </div>
+    <div class="podium" id="podium"></div>
+    <div class="tablewrap"><table class="lt" id="ledTable"></table></div>
+    <div class="legend">
+      <span><i style="background:var(--ok)"></i>On target</span>
+      <span><i style="background:var(--mid)"></i>One hand on target, or one slot off</span>
+      <span><i style="background:var(--bad)"></i>Missed</span>
+      <span>Each attempt shows the target over where you landed. Numbers are level totals</span>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+'use strict';
+const $ = id => document.getElementById(id);
+
+/* ================= constants ================= */
+const LEVELS = 5, ATTEMPTS = 3, CHANCES = LEVELS * ATTEMPTS, MAX_PLAYERS = 10;
+const MIN_ROLL = 650, WAIT_TIMEOUT = 15000, ROLL_TIMEOUT = 20000;
+const COLORS = [
+  { n:'Red',    c:'#ff3b4f' },
+  { n:'Orange', c:'#ff8a1f' },
+  { n:'Yellow', c:'#ffd84a' },
+  { n:'Green',  c:'#2fd67a' },
+  { n:'Cyan',   c:'#2bd3ff' },
+  { n:'Blue',   c:'#3a5bff' },
+  { n:'Purple', c:'#9a4dff' },
+  { n:'Pink',   c:'#ff4fae' },
+];
+COLORS.forEach(k => { const v = parseInt(k.c.slice(1), 16); const L = (.2126*(v>>16) + .7152*(v>>8&255) + .0722*(v&255)) / 255; k.fg = L > .5 ? '#15131b' : '#ffffff'; });
+const SPEEDS = {
+  easy:     { label:'Easy',     rates:[2.5, 3, 3.5, 4, 5] },
+  standard: { label:'Standard', rates:[3, 4, 5, 6, 7] },
+  hard:     { label:'Hard',     rates:[4, 5, 6.5, 8, 10] },
+};
+const MODES = { single:'One hand', split:'Two hands', ladder:'Ladder' };
+const SENS = { strict:{ fist:1.12, open:1.6 }, normal:{ fist:1.25, open:1.5 }, loose:{ fist:1.36, open:1.44 } };
+const HAND_EDGES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+const TV = new URL('.', location.href).href.slice(0,-1);
+const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
+const TOUCH = matchMedia('(pointer:coarse)').matches;
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const mod = (a, n) => ((a % n) + n) % n;
+const esc = s => String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]));
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} },
+};
+const ov = (id, on) => $(id).classList.toggle('on', !!on);
+const isOn = id => $(id).classList.contains('on');
+function view(name){ $('menu').classList.toggle('on', name === 'menu'); $('play').classList.toggle('on', name === 'play'); }
+function tween(el, to, ms = 650){
+  const from = el._v ?? 0; el._v = to; cancelAnimationFrame(el._r);
+  if (RM || from === to){ el.textContent = to; return; }
+  const t0 = performance.now();
+  const f = now => { const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3); el.textContent = Math.round(from + (to - from) * e); if (k < 1) el._r = requestAnimationFrame(f); };
+  el._r = requestAnimationFrame(f);
+}
+function setNum(el, v){ cancelAnimationFrame(el._r); el._v = v; el.textContent = v; }
+
+/* ================= state ================= */
+const cfg = Object.assign({ count:2, names:[], mode:'ladder', speed:'standard', order:'level', input:'camera', lag:40, sens:'normal' }, store.get('sisto.cfg', {}));
+if (![0,40,80,120].includes(+cfg.lag)) cfg.lag = 40;
+if (!SPEEDS[cfg.speed]) cfg.speed = 'standard';
+if (!['level','player'].includes(cfg.order)) cfg.order = 'level';
+delete cfg.pace;
+const S = { phase:'menu', match:null, turn:0, attempt:0, split:false, rate:5, panels:[], readyUntil:0, resultUntil:0, gateHold:0, lastT:0, sound:true, prevPhase:null, ledgerFinal:false, lastBonus:0 };
+// gesture state per side. 'open' rolls the colours, 'fist' stops them. Keys and touch: press = fist.
+const G = [mkG(), mkG()];
+function mkG(){ return { state:'open', since:0, pressAt:-1e9, src:'key', seen:-1e9, ratio:0, cand:null, candSince:0, candN:0, lastOpenAt:-1e9 }; }
+
+/* ================= menu ================= */
+const saveCfg = () => store.set('sisto.cfg', cfg);
+const segPaint = [];
+function segInit(id, key){
+  const seg = $(id), thumb = document.createElement('i'); thumb.className = 'thumb'; seg.prepend(thumb);
+  const paint = () => {
+    let sel = null;
+    seg.querySelectorAll('button').forEach(b => { const on = b.dataset.v === String(cfg[key]); b.setAttribute('aria-pressed', String(on)); if (on) sel = b; });
+    if (sel){ thumb.style.transform = `translate(${sel.offsetLeft}px,${sel.offsetTop}px)`; thumb.style.width = sel.offsetWidth + 'px'; thumb.style.height = sel.offsetHeight + 'px'; }
+  };
+  seg.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; cfg[key] = b.dataset.v; paint(); saveCfg(); });
+  segPaint.push(paint); paint();
+  requestAnimationFrame(() => requestAnimationFrame(() => seg.classList.add('ready')));
+}
+segInit('modeSeg', 'mode'); segInit('speedSeg', 'speed'); segInit('orderSeg', 'order'); segInit('inputSeg', 'input');
+const repaintSegs = () => segPaint.forEach(f => f());
+document.fonts?.ready.then(repaintSegs);
+addEventListener('resize', repaintSegs);
+$('lagSel').value = String(cfg.lag); $('lagSel').onchange = e => { cfg.lag = +e.target.value; saveCfg(); };
+$('sensSel').value = cfg.sens; $('sensSel').onchange = e => { cfg.sens = e.target.value; saveCfg(); };
+
+function renderNames(){
+  $('pCount').textContent = cfg.count;
+  const box = $('names'); box.innerHTML = '';
+  for (let i = 0; i < cfg.count; i++){
+    const inp = document.createElement('input');
+    inp.maxLength = 16; inp.placeholder = `Player ${i+1}`; inp.value = cfg.names[i] || ''; inp.setAttribute('aria-label', `Player ${i+1} name`);
+    inp.addEventListener('input', e => { cfg.names[i] = e.target.value; saveCfg(); });
+    box.appendChild(inp);
+  }
+}
+$('pMinus').onclick = () => { cfg.count = Math.max(1, cfg.count - 1); renderNames(); saveCfg(); };
+$('pPlus').onclick = () => { cfg.count = Math.min(MAX_PLAYERS, cfg.count + 1); renderNames(); saveCfg(); };
+renderNames();
+
+function renderHof(){
+  const hof = store.get('sisto.hof', []);
+  $('hofList').innerHTML = hof.length
+    ? hof.slice(0, 6).map((h, i) => `<li><span class="r">${i+1}</span><span>${esc(h.name)}</span><span class="m">${esc(h.mode)}, ${esc(h.speed || h.pace || '').toLowerCase()}</span><span class="t">${h.total}</span></li>`).join('')
+    : '<li class="empty">No finished runs yet. Finish all five levels and your total lands here.</li>';
+}
+renderHof();
+
+$('startBtn').addEventListener('click', async () => {
+  audio();
+  const btn = $('startBtn'), note = $('menuNote');
+  note.className = 'note'; note.textContent = '';
+  if (cfg.input === 'camera' && !hands){
+    btn.disabled = true;
+    try { await initCamera(); }
+    catch(err){ btn.disabled = false; note.className = 'note err'; note.textContent = cameraError(err); return; }
+    btn.disabled = false;
+  }
+  if (cfg.input !== 'camera') stopCamera();
+  startMatch();
+});
+
+/* ---------- hero demo: the actual mechanic, playable with a click ---------- */
+const D = { el:$('demo'), amb:$('demo').querySelector('.amb'), p:null, state:'roll', until:0, lastBg:'' };
+function demoNew(t){
+  const n = COLORS.length, seq = shuffle([...Array(n).keys()]), target = Math.floor(Math.random() * n);
+  D.p = { seq, target, tpos:seq.indexOf(target), offset:Math.random() * n, t0:t, X:0 };
+  D.state = 'roll'; D.el.classList.remove('done');
+  const c = COLORS[target];
+  D.el.style.setProperty('--tc', c.c);
+  $('demoChip').innerHTML = `<i class="sw"></i><span class="dim">Stop at</span><b>${c.n}</b>`;
+  $('demoHint').textContent = TOUCH ? 'Tap to stop' : 'Click to stop';
+}
+function demoStop(){
+  if (D.state !== 'roll') return;
+  audio();
+  const p = D.p; D.state = 'done'; D.until = performance.now() + 1500;
+  const n = p.seq.length; let d = mod(p.X - (p.tpos + .5), n); if (d > n / 2) d -= n;
+  const hit = p.seq[mod(Math.floor(p.X), n)] === p.target, ms = Math.round(Math.abs(d) / 4 * 1000);
+  $('demoRes').textContent = hit ? 'Hit' : `${ms} ms ${d < 0 ? 'early' : 'late'}`;
+  $('demoHint').textContent = hit ? 'Nice. Again in a second' : 'Again in a second';
+  D.el.classList.add('done');
+  hit ? sfx.hit(false) : sfx.miss();
+}
+D.el.addEventListener('pointerdown', demoStop);
+D.el.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter'){ e.preventDefault(); demoStop(); } });
+function demoFrame(t){
+  if (!isOn('menu')) return;
+  if (!D.p) demoNew(t);
+  if (D.state === 'done' && t > D.until) demoNew(t);
+  const p = D.p;
+  if (D.state === 'roll') p.X = p.offset + (t - p.t0) / 1000 * 4;
+  const ci = p.seq[mod(Math.floor(p.X), p.seq.length)], col = COLORS[ci];
+  if (col.c !== D.lastBg){ D.amb.style.backgroundColor = col.c; D.el.style.setProperty('--fg', col.fg); D.lastBg = col.c; }
+}
+
+/* ================= audio ================= */
+let AC = null;
+function audio(){ try { if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch(e){} return AC; }
+function tone(f, d, type = 'sine', g = .08, delay = 0, pan = 0){
+  if (!S.sound || !AC) return;
+  const t = AC.currentTime + delay, o = AC.createOscillator(), a = AC.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, t);
+  a.gain.setValueAtTime(0, t); a.gain.linearRampToValueAtTime(g, t + .006); a.gain.exponentialRampToValueAtTime(.0001, t + d);
+  let node = a;
+  if (AC.createStereoPanner && pan){ const p = AC.createStereoPanner(); p.pan.value = pan; a.connect(p); node = p; }
+  o.connect(a); node.connect(AC.destination); o.start(t); o.stop(t + d + .02);
+}
+const sfx = {
+  tick(ci, side){ tone(520 + ci * 48, .05, 'sine', .045, 0, S.split ? (side ? .6 : -.6) : 0); },
+  hit(perfect){ [660, 880, 1320].concat(perfect ? [1760] : []).forEach((f, i) => tone(f, .22, 'triangle', .08, i * .055)); },
+  close(){ tone(560, .14, 'triangle', .07); tone(420, .18, 'triangle', .06, .08); },
+  miss(){ tone(180, .3, 'triangle', .09); tone(130, .32, 'triangle', .07, .07); },
+  go(){ tone(740, .1, 'sine', .07); tone(1110, .14, 'sine', .05, .06); },
+  level(){ [440, 660, 880, 1320].forEach((f, i) => tone(f, .16, 'triangle', .06, i * .07)); },
+  soon(){ tone(300, .12, 'sine', .07); },
+};
+
+/* ================= match flow ================= */
+function startMatch(){
+  const players = [];
+  for (let i = 0; i < cfg.count; i++) players.push({ name:(cfg.names[i] || '').trim() || `Player ${i+1}`, chances:[] });
+  // the schedule is a list of turns; each turn is one player at one level, played as 3 attempts
+  const schedule = [];
+  if (cfg.order === 'player'){ for (let i = 0; i < players.length; i++) for (let L = 0; L < LEVELS; L++) schedule.push({ pi:i, level:L }); }
+  else { for (let L = 0; L < LEVELS; L++) for (let i = 0; i < players.length; i++) schedule.push({ pi:i, level:L }); }
+  S.match = { players, schedule, mode:cfg.mode, speed:cfg.speed, order:cfg.order, input:cfg.input, startedAt:Date.now(), done:false };
+  S.turn = 0; S.attempt = 0;
+  G[0] = mkG(); G[1] = mkG(); keysDown.clear(); ptrSide.clear();
+  ov('ledgerOv', false);
+  view('play');
+  $('cam').hidden = cfg.input !== 'camera';
+  try { navigator.wakeLock?.request('screen').then(w => S.wake = w).catch(() => {}); } catch(e){}
+  idlePanels();
+  showGate();
+}
+const turn = () => S.match.schedule[Math.min(S.turn, S.match.schedule.length - 1)];
+const curPlayer = () => S.match.players[turn().pi];
+const curLevel = () => turn().level;
+const isSplitAt = L => S.match.mode === 'split' || (S.match.mode === 'ladder' && L >= 3);
+const rateAt = L => SPEEDS[S.match.speed].rates[L];
+
+function showGate(){
+  S.phase = 'gate'; S.gateHold = 0;
+  ov('announce', false);
+  const p = curPlayer(), n = S.match.players.length, m = S.match;
+  const L = curLevel();
+  $('gateK').textContent = `Level ${L+1} of ${LEVELS}` + (n > 1 ? `, player ${turn().pi+1} of ${n}` : '');
+  $('gateName').textContent = p.name;
+  $('gateMeta').innerHTML = [`${rateAt(L)} colours a second`, `${ATTEMPTS} attempts`, isSplitAt(L) ? 'Both hands' : 'One hand'].map(t => `<span>${esc(t)}</span>`).join('');
+  const cam = m.input === 'camera';
+  $('gateRing').hidden = !cam;
+  $('gateHint').textContent = cam
+    ? 'Make a fist and hold it to begin. Then open your hand to roll the colours, and close it to stop.'
+    : TOUCH ? 'The colours roll by themselves. Tap to stop them on the disc’s colour.'
+            : 'The colours roll by themselves. Press Space to stop them on the disc’s colour.';
+  const ranked = rankPlayers().filter(x => x.p.chances.length);
+  $('gateMini').innerHTML = ranked.slice(0, 5).map((x, i) => `<span>${i+1}. ${esc(x.p.name)} <b>${x.total}</b></span>`).join('');
+  $('gateArc').style.strokeDashoffset = 351.9;
+  ov('gate', true);
+  updateHud(false); idlePanels();
+}
+$('gateBtn').onclick = () => { audio(); if (S.phase === 'gate') beginChance(); };
+
+function idlePanels(){
+  for (const el of PE){
+    el.root.dataset.state = 'idle'; el.root.classList.remove('rolling', 'pop', 'snap');
+    el.amb.style.backgroundColor = ''; el.root.style.setProperty('--fg', '#f3f0f7'); el.lastBg = '';
+  }
+}
+
+function beginChance(){
+  ov('gate', false);
+  const L = curLevel(), a = S.attempt, n = COLORS.length;
+  S.lastBonus = 0;
+  S.split = isSplitAt(L); S.rate = rateAt(L);
+  const pool = shuffle([...Array(n).keys()]);
+  const targets = S.split ? [pool[0], pool[1]] : [pool[0]];
+  S.panels = targets.map((target, side) => {
+    const seq = shuffle([...Array(n).keys()]);
+    let offset = Math.random() * n;
+    if (seq[mod(Math.floor(offset), n)] === target) offset += 2.5;
+    return { side, seq, target, tpos:seq.indexOf(target), offset, state:'ready', t0:0, X:offset, res:null, lastSlot:null, waitStart:0, note:'' };
+  });
+  layoutStage();
+  const t = performance.now();
+  const fresh = a === 0, splitStart = S.match.mode === 'ladder' && L === 3 && fresh;
+  const dur = splitStart ? 2600 : fresh ? 1900 : 1400;
+  const tg = S.panels.map(p => { const c = COLORS[p.target]; return `<span class="chip" style="--tc:${c.c}"><i class="sw"></i>${S.split ? `<span class="dim">${p.side ? 'Right' : 'Left'}</span>` : ''}<b>${c.n}</b></span>`; }).join('');
+  const kick = splitStart ? `Both hands from here, ${S.rate} colours a second` : `${S.rate} colours a second, attempt ${a+1} of ${ATTEMPTS}`;
+  $('announce').innerHTML = `<div class="abox"><span class="k">${kick}</span><span class="t ${fresh && L ? 'lv' : ''}">${fresh ? `Level ${L+1}` : 'Stop at'}</span><div class="tg">${tg}</div><div class="bar"><i style="--ad:${dur}ms"></i></div></div>`;
+  ov('announce', true);
+  fresh && L ? sfx.level() : sfx.go();
+  S.readyUntil = t + dur;
+  S.phase = 'ready';
+  updateHud(false);
+}
+
+function layoutStage(){
+  $('stage').dataset.split = String(S.split);
+  PE[1].root.hidden = !S.split;
+  PE[0].root.querySelector('.side').hidden = !S.split;
+  const cd = Math.round(Math.min(60, 250 / S.rate)) + 'ms';   // short crossfade: smooth, but never lags the real colour
+  for (const p of S.panels){
+    const el = PE[p.side], c = COLORS[p.target];
+    el.root.style.setProperty('--tc', c.c); el.root.style.setProperty('--cd', cd);
+    el.root.querySelector('.tn').textContent = c.n;
+    el.root.querySelector('.dname').textContent = c.n;
+    el.verdict.innerHTML = '';
+    el.root.classList.remove('pop', 'snap', 'rolling');
+    el.lastHint = null; el.lastBg = ''; el.amb.style.backgroundColor = ''; el.root.style.setProperty('--fg', '#f3f0f7');
+  }
+}
+
+function controlHint(side, rolling){
+  const lr = side ? 'right' : 'left';
+  if (S.match.input === 'camera'){
+    if (rolling) return S.split ? `✊ Fist your ${lr} hand to stop` : '✊ Make a fist to stop';
+    return S.split ? `✋ Open your ${lr} hand to roll` : '✋ Open your hand to roll';
+  }
+  if (TOUCH) return rolling ? (S.split ? `Tap the ${lr} half to stop` : 'Tap to stop') : 'Lift your finger to roll';
+  const key = S.split ? (side ? 'J' : 'F') : 'Space';
+  return rolling ? `Press ${key} to stop` : `Release ${key} to roll`;
+}
+const lagFor = g => g.src === 'cam' ? (cfg.lag || 0) : 0;
+
+function step(t){
+  const dt = Math.min(100, t - (S.lastT || t)); S.lastT = t;
+  if (S.phase === 'gate' && S.match.input === 'camera'){
+    const g = G[0], seenNow = t - g.seen < 260;
+    if (seenNow && g.state === 'fist') S.gateHold += dt; else S.gateHold = Math.max(0, S.gateHold - dt * 2);
+    $('gateArc').style.strokeDashoffset = 351.9 * (1 - Math.min(1, S.gateHold / 900));
+    if (S.gateHold >= 900){ S.gateHold = 0; beginChance(); }
+  }
+  else if (S.phase === 'ready'){
+    if (t >= S.readyUntil){
+      ov('announce', false); S.phase = 'live';
+      for (const p of S.panels){ p.state = 'wait'; p.waitStart = t; }
+    }
+  }
+  else if (S.phase === 'live'){
+    const cam = S.match.input === 'camera';
+    for (const p of S.panels){
+      const g = G[p.side];
+      if (p.state === 'wait'){
+        if (g.state === 'open' && (!cam || t - g.seen < 400) && !(p.note && t < p.noteUntil && !cam)){ p.state = 'roll'; p.t0 = t; p.lastSlot = null; p.note = ''; }
+        else if (t - p.waitStart > WAIT_TIMEOUT) forfeit(p);
+      } else if (p.state === 'roll'){
+        if (g.pressAt > p.t0){
+          if (g.pressAt - p.t0 < MIN_ROLL){ p.state = 'wait'; p.waitStart = t; p.note = 'Too quick. Let it roll a beat'; p.noteUntil = t + 900; sfx.soon(); }
+          else freeze(p, g.pressAt - lagFor(g));
+        } else if (t - p.t0 > ROLL_TIMEOUT) freeze(p, t);
+      }
+    }
+    if (S.panels.every(p => p.state === 'frozen')) finishChance(t);
+  }
+  else if (S.phase === 'result'){
+    if (t >= S.resultUntil) advance();
+  }
+}
+
+const xAt = (p, t) => p.offset + (t - p.t0) / 1000 * S.rate;
+
+function freeze(p, tf){
+  tf = Math.max(tf, p.t0 + MIN_ROLL);
+  p.X = xAt(p, tf); p.state = 'frozen';
+  p.res = scoreSide(p);
+  paintVerdict(p);
+  const el = PE[p.side];
+  el.root.classList.remove('snap', 'pop'); void el.root.offsetWidth;
+  el.root.classList.add('snap'); if (p.res.hit) el.root.classList.add('pop');
+  if (p.res.hit) sfx.hit(p.res.perfect); else if (p.res.close) sfx.close(); else sfx.miss();
+}
+function forfeit(p){
+  p.state = 'frozen'; p.X = p.offset;
+  p.res = { target:p.target, landed:null, hit:false, close:false, perfect:false, forfeit:true, pts:0, errMs:null, verdict:'No stop' };
+  paintVerdict(p); sfx.miss();
+}
+function paintVerdict(p){
+  const r = p.res, el = PE[p.side];
+  const timing = r.errMs == null ? 'The colours never rolled' : Math.abs(r.errMs) <= 4 ? 'Dead centre' : `${Math.abs(r.errMs)} ms ${r.errMs < 0 ? 'early' : 'late'}`;
+  const landed = r.landed == null ? '' : `<span class="chip" style="--tc:${COLORS[r.landed].c}"><i class="sw"></i><span class="dim">Landed</span><b>${COLORS[r.landed].n}</b></span>`;
+  el.verdict.innerHTML = `<div class="w">${r.verdict}</div><div class="p">+<span class="pn">0</span></div><div class="m">${landed}<span class="chip plain">${timing}</span></div>`;
+  tween(el.verdict.querySelector('.pn'), r.pts, 700);
+}
+
+function scoreSide(p){
+  const n = p.seq.length, X = p.X, k = Math.floor(X), phase = X - k;
+  const landed = p.seq[mod(k, n)];
+  let d = mod(X - (p.tpos + .5), n); if (d > n / 2) d -= n;
+  const errMs = Math.round(d / S.rate * 1000);
+  const hit = landed === p.target, close = !hit && Math.abs(d) < 1.5;
+  const precision = hit ? 1 - Math.abs(phase - .5) * 2 : 0;
+  const base = hit ? 100 + Math.round(50 * precision) : close ? 25 : 0;
+  const pts = Math.round(base * S.rate / 5);
+  const perfect = hit && precision >= .7;
+  const verdict = hit ? (perfect ? 'Perfect' : 'Hit') : close ? (d < 0 ? 'Early' : 'Late') : 'Miss';
+  return { target:p.target, landed, hit, close, perfect, forfeit:false, pts, errMs, verdict, precision };
+}
+
+function finishChance(t){
+  const sides = S.panels.map(p => p.res);
+  const both = S.split && sides.every(s => s.hit);
+  const bonus = both ? Math.round(100 * S.rate / 5) : 0;
+  const total = sides.reduce((a, s) => a + s.pts, 0) + bonus;
+  const cls = sides.every(s => s.hit) ? 'hit' : sides.some(s => s.hit || s.close) ? 'close' : 'miss';
+  curPlayer().chances.push({ level:curLevel(), attempt:S.attempt, split:S.split, rate:S.rate, sides, bonus, total, cls });
+  S.lastBonus = bonus;
+  if (bonus){
+    for (const p of S.panels) PE[p.side].verdict.querySelector('.m')?.insertAdjacentHTML('beforeend', `<span class="chip plain">Both hands +${bonus}</span>`);
+    setTimeout(() => sfx.level(), 260);
+  }
+  S.phase = 'result';
+  S.resultUntil = t + (S.split ? 2700 : 2100);
+  updateHud(true);
+}
+
+function advance(){
+  S.attempt++;
+  if (S.attempt >= ATTEMPTS){
+    S.attempt = 0; S.turn++;
+    if (S.turn >= S.match.schedule.length){ endMatch(); return; }
+    showGate(); return;
+  }
+  beginChance();
+}
+
+function endMatch(){
+  S.phase = 'final'; S.match.done = true;
+  ov('announce', false); ov('gate', false);
+  const hof = store.get('sisto.hof', []);
+  for (const p of S.match.players) if (p.chances.length === CHANCES) hof.push({ name:p.name, total:sum(p), mode:MODES[S.match.mode], speed:SPEEDS[S.match.speed].label, at:Date.now() });
+  hof.sort((a, b) => b.total - a.total); store.set('sisto.hof', hof.slice(0, 20));
+  openLedger(true);
+}
+
+/* ================= stats & ledger ================= */
+const sum = p => p.chances.reduce((a, c) => a + c.total, 0);
+function stats(p){
+  let sidesN = 0, hits = 0; const errs = [];
+  for (const c of p.chances) for (const s of c.sides){ sidesN++; if (s.hit) hits++; if (s.errMs != null) errs.push(Math.abs(s.errMs)); }
+  return { total:sum(p), sidesN, hits, avg: errs.length ? Math.round(errs.reduce((a, b) => a + b, 0) / errs.length) : null, best: p.chances.reduce((m, c) => Math.max(m, c.total), 0) };
+}
+function rankPlayers(){
+  return S.match.players.map((p, i) => ({ p, i, ...stats(p) }))
+    .sort((a, b) => b.total - a.total || (a.avg ?? 1e9) - (b.avg ?? 1e9) || a.i - b.i);
+}
+// one cell per level: three attempts (target dot over landed dot), then the level total
+function levelCell(p, L){
+  const cs = p.chances.filter(c => c.level === L);
+  if (!cs.length) return '<td class="c empty">–</td>';
+  const at = cs.map(c => `<span class="at ${c.cls}" title="Attempt ${c.attempt+1}: ${c.total} points${c.bonus ? `, both hands +${c.bonus}` : ''}">${c.sides.map(s => `<span class="pr" style="flex-direction:column"><i style="background:${COLORS[s.target].c}"></i>${s.forfeit ? '<i class="x"></i>' : `<i style="background:${COLORS[s.landed].c};margin:-3px 0 0"></i>`}</span>`).join('')}</span>`).join('');
+  return `<td class="c"><div class="sw">${at}</div><b>${cs.reduce((a, c) => a + c.total, 0)}</b></td>`;
+}
+const statLine = r => `${r.hits} of ${r.sidesN} on target${r.avg != null ? `, ${r.avg} ms off on average` : ''}`;
+function openLedger(final){
+  S.ledgerFinal = final;
+  if (!final){ S.prevPhase = S.phase; S.phase = 'paused'; ov('announce', false); }
+  const R = rankPlayers(), m = S.match;
+  $('ledK').textContent = final ? `${MODES[m.mode]}, ${SPEEDS[m.speed].label.toLowerCase()} speed` : 'Paused';
+  const anyPlayed = R.some(r => r.p.chances.length);
+  if (final && anyPlayed){
+    const w = R[0], sec = R[1];
+    $('ledTitle').textContent = R.length > 1 ? `${w.p.name} wins` : 'Run complete';
+    $('ledLead').textContent = `${w.total} points, ${statLine(w)}.` + (sec ? ` ${sec.p.name} finished ${w.total - sec.total} behind.` : '');
+  } else if (final){
+    $('ledTitle').textContent = 'Match ended'; $('ledLead').textContent = 'Nobody took a chance yet.';
+  } else {
+    $('ledTitle').textContent = 'Standings';
+    $('ledLead').textContent = `${curPlayer().name} is up on level ${curLevel() + 1}, attempt ${S.attempt + 1} of ${ATTEMPTS}. Resuming restarts this attempt.`;
+  }
+  const pod = $('podium');
+  const top = final && anyPlayed && R.length > 1 ? R.slice(0, 3) : [];
+  pod.style.setProperty('--n', top.length || 1);
+  pod.innerHTML = top.map((r, i) => `<div class="pod ${i === 0 ? 'first' : ''}" style="--i:${i}"><span class="rk">${['First','Second','Third'][i]}</span><span class="nm">${esc(r.p.name)}</span><span class="tt" data-v="${r.total}">0</span><span class="st">${statLine(r)}</span></div>`).join('');
+  pod.hidden = !top.length;
+  pod.querySelectorAll('.tt').forEach((el, i) => { el._v = 0; setTimeout(() => tween(el, +el.dataset.v, 900), 150 + i * 90); });
+  const head = `<thead><tr><th>Rank</th><th>Player</th>${[...Array(LEVELS)].map((_, i) => `<th class="c">Level ${i+1}<br><span style="font-weight:400">${rateAt(i)}/s</span></th>`).join('')}<th class="num">On target</th><th class="num">Avg timing</th><th class="num">Total</th></tr></thead>`;
+  const body = R.map((r, i) => `<tr class="${!final && r.i === turn().pi ? 'cur' : ''}" style="--i:${i}">
+    <td class="rk">${i+1}</td><td class="nm">${esc(r.p.name)}<small>${r.p.chances.length} of ${CHANCES} attempts</small></td>
+    ${[...Array(LEVELS)].map((_, L) => levelCell(r.p, L)).join('')}
+    <td class="num">${r.sidesN ? `${r.hits}/${r.sidesN}` : '–'}</td><td class="num">${r.avg != null ? r.avg + ' ms' : '–'}</td>
+    <td class="num tot">${r.total}</td></tr>`).join('');
+  $('ledTable').innerHTML = head + '<tbody>' + body + '</tbody>';
+  $('ledActs').innerHTML = final
+    ? `<button class="btn pri" data-a="rematch">Rematch</button><button class="btn" data-a="menu">Change setup</button><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="copy">Copy results</button>`
+    : `<button class="btn pri" data-a="resume">Resume</button><button class="btn" data-a="csv">Download CSV</button><button class="btn" data-a="end">End match</button>`;
+  ov('ledgerOv', true);
+}
+$('ledActs').addEventListener('click', e => {
+  const a = e.target.closest('button')?.dataset.a; if (!a) return;
+  if (a === 'resume') closeLedger();
+  else if (a === 'rematch'){ renderHof(); startMatch(); }
+  else if (a === 'menu') toMenu();
+  else if (a === 'csv') downloadCSV();
+  else if (a === 'copy') copyResults();
+  else if (a === 'end'){ ov('ledgerOv', false); endMatch(); }
+});
+function closeLedger(){
+  if (S.ledgerFinal) return;
+  ov('ledgerOv', false);
+  const prev = S.prevPhase;
+  if (prev === 'gate') showGate();
+  else if (prev === 'ready' || prev === 'live') beginChance();
+  else if (prev === 'result'){ S.phase = 'result'; S.resultUntil = performance.now() + 300; }
+  else S.phase = prev;
+}
+function toMenu(){
+  ov('ledgerOv', false); ov('gate', false); ov('announce', false);
+  view('menu'); S.phase = 'menu'; renderHof(); renderNames(); D.p = null;
+  setTimeout(repaintSegs, 50);
+  try { S.wake?.release(); } catch(e){}
+}
+function downloadCSV(){
+  const R = rankPlayers();
+  const head = ['Rank','Player'];
+  for (let L = 0; L < LEVELS; L++){ for (let a = 0; a < ATTEMPTS; a++) head.push(`L${L+1} attempt ${a+1}`); head.push(`L${L+1} total`); }
+  const rows = [[...head, 'Hits', 'Stops', 'Avg timing ms', 'Best attempt', 'Total']];
+  R.forEach((r, i) => {
+    const row = [i+1, r.p.name];
+    for (let L = 0; L < LEVELS; L++){
+      for (let a = 0; a < ATTEMPTS; a++){
+        const c = r.p.chances.find(x => x.level === L && x.attempt === a);
+        row.push(c ? `${c.total} (${c.sides.map(s => `${COLORS[s.target].n}>${s.forfeit ? '-' : COLORS[s.landed].n}`).join(' + ')})` : '');
+      }
+      row.push(r.p.chances.filter(x => x.level === L).reduce((t, c) => t + c.total, 0));
+    }
+    rows.push([...row, r.hits, r.sidesN, r.avg ?? '', r.best, r.total]);
+  });
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type:'text/csv' }));
+  a.download = `sisto-ledger-${new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')}.csv`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Ledger downloaded');
+}
+function copyResults(){
+  const R = rankPlayers();
+  const txt = `Sisto, ${MODES[S.match.mode]}, ${SPEEDS[S.match.speed].label} speed\n` + R.map((r, i) => `${i+1}. ${r.p.name}: ${r.total} (${statLine(r)})`).join('\n');
+  (navigator.clipboard?.writeText(txt) || Promise.reject()).then(() => toast('Results copied')).catch(() => toast('The browser blocked copying'));
+}
+function toast(m){ const t = $('toast'); t.textContent = m; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('on'), 1900); }
+
+/* ================= HUD ================= */
+function updateHud(animate){
+  if (!S.match) return;
+  const p = curPlayer(); if (!p) return;
+  $('hudName').textContent = p.name;
+  const L = curLevel();
+  $('hudChance').textContent = `Level ${L+1}, attempt ${S.attempt + 1} of ${ATTEMPTS}`;
+  animate ? tween($('hudScore'), sum(p)) : setNum($('hudScore'), sum(p));
+  $('hudPace').textContent = `${rateAt(L)}/s`;
+  const nowK = L * ATTEMPTS + S.attempt;
+  $('hudDots').innerHTML = [...Array(CHANCES)].map((_, k) => {
+    const lv = Math.floor(k / ATTEMPTS), c = p.chances.find(x => x.level === lv && x.attempt === k % ATTEMPTS);
+    return `<i class="${(c ? c.cls : k === nowK && S.phase !== 'final' ? 'now' : '') + (isSplitAt(lv) ? ' split' : '') + (k && k % ATTEMPTS === 0 ? ' gs' : '')}"></i>`;
+  }).join('');
+}
+$('btnLedger').onclick = () => { if (S.phase !== 'paused' && S.phase !== 'final') openLedger(false); };
+$('btnSound').onclick = () => { S.sound = !S.sound; $('btnSound').classList.toggle('off', !S.sound); };
+$('btnFull').onclick = () => { try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch(e){} };
+$('btnEnd').onclick = () => {
+  if (S.phase === 'final') return;
+  const b = $('btnEnd');
+  if (b.classList.contains('arm')){ clearTimeout(b._t); b.classList.remove('arm'); b.innerHTML = b._html; endMatch(); return; }
+  b._html = b.innerHTML; b.classList.add('arm'); b.textContent = 'End match?';
+  b._t = setTimeout(() => { b.classList.remove('arm'); b.innerHTML = b._html; }, 2800);
+};
+
+/* ================= rendering ================= */
+const PE = [0,1].map(i => {
+  const root = $('p' + i);
+  return { root, amb:root.querySelector('.amb'), verdict:root.querySelector('.verdict'), hint:root.querySelector('.hint'), lastBg:'', lastHint:null };
+});
+let DPR = Math.min(2, devicePixelRatio || 1);
+addEventListener('resize', () => { DPR = Math.min(2, devicePixelRatio || 1); });
+
+function render(t){
+  if (isOn('menu')) demoFrame(t);
+  if (!S.match || !isOn('play') || !S.panels.length) return;
+  if (!['ready','live','result','paused'].includes(S.phase)) return;
+  for (const p of S.panels){
+    const el = PE[p.side];
+    const X = p.state === 'roll' ? xAt(p, t) : p.state === 'frozen' ? p.X : p.offset;
+    const slot = Math.floor(X), ci = p.seq[mod(slot, p.seq.length)];
+    const showC = p.state === 'roll' || (p.state === 'frozen' && !p.res?.forfeit);
+    const bg = showC ? COLORS[ci].c : '', fg = showC ? COLORS[ci].fg : '#f3f0f7';
+    if (bg !== el.lastBg){ el.amb.style.backgroundColor = bg; el.root.style.setProperty('--fg', fg); el.lastBg = bg; }
+    if (el.root.dataset.state !== p.state){ el.root.dataset.state = p.state; el.root.classList.toggle('rolling', p.state === 'roll'); }
+    if (p.state === 'roll' && slot !== p.lastSlot && S.phase === 'live'){ if (p.lastSlot !== null) sfx.tick(ci, p.side); p.lastSlot = slot; }
+    const hint = p.state === 'ready' ? 'Get ready' : p.state === 'wait' ? (p.note || controlHint(p.side, false)) : p.state === 'roll' ? controlHint(p.side, true) : '';
+    if (hint !== el.lastHint){ el.hint.textContent = hint; el.hint.classList.toggle('warn', !!p.note && p.state === 'wait'); el.hint.hidden = !hint; el.lastHint = hint; }
+  }
+}
+
+
+/* ================= keys & touch: press = fist (stop), release = open (roll) ================= */
+// pressAt latches every stop, so a tap shorter than one frame still counts
+function setG(side, st, src, t){ const g = G[side]; if (g.state === st) return; g.state = st; g.since = t; g.src = src; if (st === 'fist') g.pressAt = t; }
+function keySide(code){
+  if (code === 'Space') return 0;
+  if (['KeyF','KeyA','ArrowLeft'].includes(code)) return 0;
+  if (['KeyJ','KeyL','ArrowRight'].includes(code)) return S.split ? 1 : 0;
+  return null;
+}
+const keysDown = new Set();
+addEventListener('keydown', e => {
+  if (e.target.matches?.('input,select,textarea')) return;
+  if (!isOn('play')) return;
+  if (e.code === 'Escape'){ if (isOn('ledgerOv')){ if (!S.ledgerFinal) closeLedger(); } else if (S.match && S.phase !== 'final') openLedger(false); return; }
+  if (S.phase === 'gate' && (e.code === 'Space' || e.code === 'Enter')){ e.preventDefault(); audio(); beginChance(); keysDown.add(e.code); return; }
+  if (isOn('ledgerOv')) return;
+  const side = keySide(e.code); if (side == null) return;
+  e.preventDefault(); if (e.repeat || keysDown.has(e.code)) return;
+  keysDown.add(e.code); audio();
+  if (S.match?.input !== 'camera') setG(side, 'fist', 'key', performance.now());
+});
+addEventListener('keyup', e => {
+  if (!keysDown.delete(e.code)) return;
+  const side = keySide(e.code); if (side == null) return;
+  if (S.match?.input !== 'camera') setG(side, 'open', 'key', performance.now());
+});
+const ptrSide = new Map(), stage = $('stage');
+stage.addEventListener('pointerdown', e => {
+  audio();
+  if (S.match?.input === 'camera') return;
+  const side = S.split ? (e.clientX < innerWidth / 2 ? 0 : 1) : 0;
+  ptrSide.set(e.pointerId, side);
+  try { stage.setPointerCapture(e.pointerId); } catch(x){}
+  setG(side, 'fist', 'key', performance.now());
+});
+const ptrUp = e => { if (!ptrSide.has(e.pointerId)) return; const side = ptrSide.get(e.pointerId); ptrSide.delete(e.pointerId); setG(side, 'open', 'key', performance.now()); };
+stage.addEventListener('pointerup', ptrUp); stage.addEventListener('pointercancel', ptrUp);
+stage.addEventListener('contextmenu', e => e.preventDefault());
+
+/* ================= hand tracking ================= */
+const video = $('video'), camDots = $('camDots'), cctx = camDots.getContext('2d');
+let hands = null, stream = null, lastVT = -1;
+
+async function initCamera(){
+  const note = $('menuNote');
+  if (!navigator.mediaDevices?.getUserMedia){ const e = new Error('insecure'); e.name = 'Insecure'; throw e; }
+  note.textContent = 'Opening the camera…';
+  stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:640 }, height:{ ideal:480 } }, audio:false });
+  video.srcObject = stream;
+  await video.play().catch(() => {});
+  note.textContent = 'Loading hand tracking. The first time needs internet.';
+  const { FilesetResolver, HandLandmarker } = await import(TV + '/vision_bundle.mjs');
+  const fs = await FilesetResolver.forVisionTasks(TV);
+  const opts = { baseOptions:{ modelAssetPath:MODEL, delegate:'GPU' }, runningMode:'VIDEO', numHands:2, minHandDetectionConfidence:.5, minHandPresenceConfidence:.5, minTrackingConfidence:.5 };
+  try { hands = await HandLandmarker.createFromOptions(fs, opts); }
+  catch(e){ opts.baseOptions.delegate = 'CPU'; hands = await HandLandmarker.createFromOptions(fs, opts); }
+  note.textContent = 'Camera ready. Tracking runs on this device and nothing is uploaded.';
+}
+function stopCamera(){
+  try { stream?.getTracks().forEach(tr => tr.stop()); } catch(e){}
+  stream = null; hands = null; video.srcObject = null;
+}
+function cameraError(err){
+  let framed = false; try { framed = window.top !== window; } catch(x){ framed = true; }
+  if (err?.name === 'Insecure') return 'This browser blocks the camera here. Phones need the page opened from an https address, not a local file. Switch Control to Keys or touch to play now.';
+  if (err?.name === 'NotAllowedError' || err?.name === 'SecurityError') return framed ? 'The camera is blocked inside this preview. Open the file in its own browser tab.' : 'Camera permission was blocked. Allow it from the camera icon in the address bar, then press Start match again.';
+  if (err?.name === 'NotFoundError') return 'No camera found. Switch Control to Keys or touch.';
+  if (err?.name === 'NotReadableError') return 'Another app is using the camera. Close it and try again.';
+  if (/import|fetch|Failed|network/i.test(err?.message || '')) return 'Hand tracking could not download. It needs internet the first time, so check the connection and try again.';
+  return (err?.message || 'Hand tracking could not start.') + ' Try Chrome, or switch Control to Keys or touch.';
+}
+
+// openness = fingertip distance from wrist over knuckle distance from wrist
+function analyze(lm, aspect){
+  const d = (a, b) => Math.hypot((a.x - b.x) * aspect, a.y - b.y, ((a.z || 0) - (b.z || 0)) * aspect);
+  const w = lm[0]; let s = 0;
+  for (const [m, tip] of [[5,8],[9,12],[13,16],[17,20]]) s += d(lm[tip], w) / Math.max(1e-6, d(lm[m], w));
+  const ratio = s / 4, th = SENS[cfg.sens] || SENS.normal;
+  return { lm, ratio, raw: ratio >= th.open ? 'open' : ratio <= th.fist ? 'fist' : null, cx: 1 - (lm[0].x + lm[9].x) / 2, size: d(lm[0], lm[9]), side: -1 };
+}
+function feedRaw(side, h, t){
+  const g = G[side]; g.seen = t; g.ratio = h.ratio; h.side = side;
+  if (h.raw === 'open') g.lastOpenAt = t;
+  const raw = h.raw;
+  if (!raw || raw === g.state){ g.cand = null; g.candN = 0; return; }
+  if (g.cand !== raw){ g.cand = raw; g.candSince = t; g.candN = 1; } else g.candN++;
+  if (g.candN >= 2){
+    // a stop is timed from mid-curl (between the last open frame and the first fist frame), not from when the fist is confirmed
+    let at = g.candSince;
+    if (raw === 'fist' && g.candSince - g.lastOpenAt < 300) at = (g.lastOpenAt + g.candSince) / 2;
+    setG(side, raw, 'cam', at); g.cand = null; g.candN = 0;
+  }
+}
+function processHands(list, t){
+  const splitNow = S.split && ['ready','live','result'].includes(S.phase);
+  if (list.length){
+    if (splitNow){
+      list.sort((a, b) => a.cx - b.cx);
+      if (list.length >= 2){ feedRaw(0, list[0], t); feedRaw(1, list[list.length - 1], t); }
+      else feedRaw(list[0].cx < .5 ? 0 : 1, list[0], t);
+    } else feedRaw(0, list.reduce((a, b) => b.size > a.size ? b : a), t);
+  }
+  drawCam(list, splitNow, t);
+}
+function drawCam(list, splitNow, t){
+  if ($('cam').hidden) return;
+  const W = camDots.width = camDots.clientWidth * DPR, H = camDots.height = camDots.clientHeight * DPR;
+  cctx.clearRect(0, 0, W, H);
+  if (splitNow){ cctx.strokeStyle = 'rgba(255,255,255,.3)'; cctx.setLineDash([4 * DPR, 4 * DPR]); cctx.beginPath(); cctx.moveTo(W / 2, 0); cctx.lineTo(W / 2, H); cctx.stroke(); cctx.setLineDash([]); }
+  for (const h of list){
+    const g = h.side >= 0 ? G[h.side] : null;
+    cctx.strokeStyle = !g ? 'rgba(243,240,247,.5)' : g.state === 'fist' ? '#ffc24a' : '#3fe0a0';
+    cctx.lineWidth = 2 * DPR; cctx.lineCap = 'round';
+    cctx.beginPath();
+    for (const [a, b] of HAND_EDGES){ cctx.moveTo((1 - h.lm[a].x) * W, h.lm[a].y * H); cctx.lineTo((1 - h.lm[b].x) * W, h.lm[b].y * H); }
+    cctx.stroke();
+  }
+  const th = SENS[cfg.sens] || SENS.normal, lo = .8, hi = 2.0, pct = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
+  const html = (splitNow ? [0, 1] : [0]).map(s => {
+    const g = G[s], seen = t - g.seen < 300;
+    const st = !seen ? 'No hand' : g.state === 'fist' ? '✊ Stop' : '✋ Roll';
+    return `<div class="tag"><div class="t"><span>${splitNow ? (s ? 'Right' : 'Left') : 'Hand'}</span><b>${st}</b></div><div class="meter" style="--f:${pct(th.fist)}%;--o:${pct(th.open)}%"><i style="width:${seen ? pct(g.ratio) : 0}%;background:${g.state === 'fist' ? '#ffc24a' : '#3fe0a0'}"></i></div></div>`;
+  }).join('');
+  const tags = $('camTags'); if (tags._h !== html){ tags.innerHTML = html; tags._h = html; }
+}
+function detect(t){
+  if (!hands || video.readyState < 2 || video.currentTime === lastVT) return;
+  lastVT = video.currentTime;
+  try {
+    const res = hands.detectForVideo(video, t);
+    const aspect = (video.videoWidth || 4) / (video.videoHeight || 3);
+    processHands((res.landmarks || []).map(lm => analyze(lm, aspect)), t);
+  } catch(e){}
+}
+function handHint(t){
+  const el = $('handHint');
+  if (!S.match || S.match.input !== 'camera' || !isOn('play') || !(S.phase === 'live' || S.phase === 'gate')){ el.hidden = true; return; }
+  const need = S.phase === 'live' && S.split ? [0, 1] : [0];
+  const missing = need.filter(s => t - G[s].seen > 1500);
+  el.hidden = !missing.length || S.phase === 'gate';
+  if (missing.length) el.textContent = S.split && S.phase === 'live' ? (missing.length === 2 ? 'Show both hands to the camera' : `Show your ${missing[0] ? 'right' : 'left'} hand`) : 'Raise your hand into the camera';
+}
+
+/* ================= main loop ================= */
+function loop(t){
+  requestAnimationFrame(loop);
+  detect(t);
+  if (S.match && S.phase !== 'paused' && S.phase !== 'final' && S.phase !== 'menu') step(t);
+  render(t);
+  handHint(t);
+}
+requestAnimationFrame(loop);
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.match && (S.phase === 'live' || S.phase === 'ready')) openLedger(false); });
+
+window.__sisto = { S, G, cfg, analyze, feedRaw, processHands, setG, COLORS, rankPlayers, startMatch, beginChance };
+})();
+</script>
+</body>
+</html>
